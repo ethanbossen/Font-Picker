@@ -33,18 +33,17 @@ const applyFontStyle = (fontFamily: string) => {
     link.rel = "stylesheet";
     link.href = getFontLink(fontFamily);
     document.head.appendChild(link);
+
+    // Apply the font to the body of the page
+    document.body.style.fontFamily = fontFamily;
 };
 
 export const FontPicker = function ({
-                                        siteUUID,
                                         label,
                                         currentFontName,
-                                        updateFont,
                                     }: {
-    siteUUID: string;
     label: ReactNode;
     currentFontName?: string;
-    updateFont: (font: WebfontFamily) => void;
 }) {
     const [searchQuery, setSearchQuery] = useState("");
     const [loadedStylesMap, setLoadedStylesMap] = useState<{ [key: string]: boolean }>({});
@@ -54,12 +53,14 @@ export const FontPicker = function ({
         onDropdownClose: () => combobox.resetSelectedOption(),
     });
 
-    const { fonts, loading, error } = useFonts(siteUUID); // Using the hook with the siteUUID
+    const { fonts, loading, error } = useFonts();
 
-    const fontsList = (fonts || []).filter((f) => {
+    console.log(fonts)// Using the hook with the siteUUID
+
+    const fontsList = Array.isArray(fonts) ? fonts.filter((f) => {
         const family = f.family;
         return !family?.includes("Icons") && !family?.includes("Symbols");
-    });
+    }) : [];
 
     const loadFontStyles = useCallback(
         (fontFamily: string) => {
@@ -101,7 +102,6 @@ export const FontPicker = function ({
     });
 
     const handleFontSelection = (font: WebfontFamily) => {
-        updateFont(font);
         loadFontStyles(font.family);
     };
 
@@ -246,6 +246,11 @@ export const FontPicker = function ({
                     </div>
                 </ComboboxDropdown>
             </Combobox>
+
+            {/* Example sentence showing the applied font */}
+            <div style={{ fontFamily: currentFontName }}>
+                <p style={{ fontSize: "18px" }}>This is an example sentence with the selected font!</p>
+            </div>
         </div>
     );
 };
