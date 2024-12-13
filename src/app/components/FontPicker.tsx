@@ -54,23 +54,29 @@ export const FontPicker = function ({
     });
 
     const { fonts, loading, error } = useFonts();
+    console.log(fonts)
 
-    console.log(fonts)// Using the hook with the siteUUID
-
-    const fontsList = Array.isArray(fonts) ? fonts.filter((f) => {
-        const family = f.family;
-        return !family?.includes("Icons") && !family?.includes("Symbols");
+    const fontsList = fonts && Array.isArray(fonts.items) ? fonts.items.filter((f) => {
+        const family = f.family; // f.family may be undefined
+        return family && !family.includes("Icons") && !family.includes("Symbols");
     }) : [];
+
 
     const loadFontStyles = useCallback(
         (fontFamily: string) => {
             if (loadedStylesMap[fontFamily]) {
                 return;
-            } else {
-                loadedStylesMap[fontFamily] = true;
-                setLoadedStylesMap(loadedStylesMap);
-                applyFontStyle(fontFamily);
             }
+
+            const existingLink = document.head.querySelector(`link[href*='${fontFamily}']`);
+            if (existingLink) {
+                document.head.removeChild(existingLink);
+            }
+
+            loadedStylesMap[fontFamily] = true;
+            setLoadedStylesMap({ ...loadedStylesMap });
+
+            applyFontStyle(fontFamily);
         },
         [loadedStylesMap]
     );
@@ -247,9 +253,8 @@ export const FontPicker = function ({
                 </ComboboxDropdown>
             </Combobox>
 
-            {/* Example sentence showing the applied font */}
-            <div style={{ fontFamily: currentFontName }}>
-                <p style={{ fontSize: "18px" }}>This is an example sentence with the selected font!</p>
+            <div className="pt-10 flex justify-center" style={{fontFamily: currentFontName || 'inherit'}}>
+                <p style={{fontSize: "18px"}}>This is an example sentence with the selected font!</p>
             </div>
         </div>
     );

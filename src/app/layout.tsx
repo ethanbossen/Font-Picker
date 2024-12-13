@@ -2,7 +2,7 @@ import { MantineProvider } from "@mantine/core";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-
+import '@mantine/core/styles.css';
 const geistSans = Geist({
     variable: "--font-geist-sans",
     subsets: ["latin"],
@@ -29,6 +29,9 @@ export default function RootLayout({
             className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
         <MantineProvider
+            theme={{
+                fontFamily: `${geistSans.style.fontFamily}, ${geistMono.style.fontFamily}, sans-serif`,
+            }}
         >
             {children}
         </MantineProvider>

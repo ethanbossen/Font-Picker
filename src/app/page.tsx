@@ -6,7 +6,7 @@ export default function Home() {
     const font = "";
 
     return (
-        <div>
+        <div className="w-full max-w-3xl mx-auto align-center pt-10 justify-center">
             <FontPicker
                 label={<Title>Font Picker</Title>}
                 currentFontName={font}
