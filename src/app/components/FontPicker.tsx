@@ -18,7 +18,6 @@ import {
 import axios from "axios";
 import { IconExternalLink, IconSearch, IconX } from "@tabler/icons-react";
 
-
 const FONT_LIMIT = 10;
 
 export const FontPicker = () => {
@@ -31,22 +30,24 @@ export const FontPicker = () => {
     const combobox = useCombobox();
 
     useEffect(() => {
-        const apiKey = "";
+        const apiKey = ""; // Replace with your API key
         axios.get(`https://www.googleapis.com/webfonts/v1/webfonts?key=${apiKey}&sort=popularity`)
             .then(response => {
                 const fontFamilies = response.data.items.map(font => font.family);
                 setFonts(fontFamilies);
-                setFilteredFonts(fontFamilies);
+                setFilteredFonts(fontFamilies); // Store all fonts in filteredFonts initially
                 setSelectedFont(fontFamilies[0]);
             })
             .catch(error => console.error('Error fetching fonts:', error));
     }, []);
 
     useEffect(() => {
+        // Apply filtering to the entire list, not just visible fonts
         const filtered = fonts.filter(font =>
             font.toLowerCase().includes(searchQuery.toLowerCase())
         );
         setFilteredFonts(filtered);
+        setLimit(FONT_LIMIT); // Reset limit after search query change
     }, [searchQuery, fonts]);
 
     const loadMoreFonts = () => {
@@ -146,7 +147,6 @@ export const FontPicker = () => {
                             }
                             onChange={(e) => {
                                 setSearchQuery(e.target.value);
-                                setLimit(FONT_LIMIT);
                             }}
                         />
                     </div>
