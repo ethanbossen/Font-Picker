@@ -3,7 +3,7 @@ import axios from "axios";
 import { WebfontList } from "google-fonts";
 
 // Define the URL for the Google Fonts API
-const googleFontsUrl = "https://www.googleapis.com/webfonts/v1/webfonts?key=AIzaSyAsmsrkT0CN0AHS6iPY4x6UIAoUziDNSsc";
+const googleFontsUrl = "https://www.googleapis.com/webfonts/v1/webfonts?key=API_KEY";
 
 // Custom hook to fetch the list of Google Fonts
 function useFonts() {
