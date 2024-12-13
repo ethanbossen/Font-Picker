@@ -1,6 +1,6 @@
 "use client";
 
-import React, { ReactNode, useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
     ActionIcon,
     Button,
@@ -15,127 +15,70 @@ import {
     TextInput,
     useCombobox,
 } from "@mantine/core";
-
+import axios from "axios";
 import { IconExternalLink, IconSearch, IconX } from "@tabler/icons-react";
-import { WebfontFamily } from "google-fonts";
-import { useFonts } from "@/app/hooks/useFonts";
+
 
 const FONT_LIMIT = 10;
 
-const getFontLink = (fontFamily: string): string => {
-    return encodeURI(
-        `https://fonts.googleapis.com/css2?family=${fontFamily}&display=swap`,
-    );
-};
-
-const applyFontStyle = (fontFamily: string) => {
-    const link = document.createElement("link");
-    link.rel = "stylesheet";
-    link.href = getFontLink(fontFamily);
-    document.head.appendChild(link);
-
-    // Apply the font to the body of the page
-    document.body.style.fontFamily = fontFamily;
-};
-
-export const FontPicker = function ({
-                                        label,
-                                        currentFontName,
-                                    }: {
-    label: ReactNode;
-    currentFontName?: string;
-}) {
-    const [searchQuery, setSearchQuery] = useState("");
-    const [loadedStylesMap, setLoadedStylesMap] = useState<{ [key: string]: boolean }>({});
+export const FontPicker = () => {
+    const [fonts, setFonts] = useState([]);
+    const [filteredFonts, setFilteredFonts] = useState([]);
+    const [selectedFont, setSelectedFont] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
     const [limit, setLimit] = useState(FONT_LIMIT);
 
-    const combobox = useCombobox({
-        onDropdownClose: () => combobox.resetSelectedOption(),
-    });
-
-    const { fonts, loading, error } = useFonts();
-    console.log(fonts)
-
-    const fontsList = fonts && Array.isArray(fonts.items) ? fonts.items.filter((f) => {
-        const family = f.family; // f.family may be undefined
-        return family && !family.includes("Icons") && !family.includes("Symbols");
-    }) : [];
-
-
-    const loadFontStyles = useCallback(
-        (fontFamily: string) => {
-            if (loadedStylesMap[fontFamily]) {
-                return;
-            }
-
-            const existingLink = document.head.querySelector(`link[href*='${fontFamily}']`);
-            if (existingLink) {
-                document.head.removeChild(existingLink);
-            }
-
-            loadedStylesMap[fontFamily] = true;
-            setLoadedStylesMap({ ...loadedStylesMap });
-
-            applyFontStyle(fontFamily);
-        },
-        [loadedStylesMap]
-    );
+    const combobox = useCombobox();
 
     useEffect(() => {
-        if (currentFontName) {
-            loadFontStyles(currentFontName);
-        }
-    }, [currentFontName, loadFontStyles]);
+        const apiKey = "";
+        axios.get(`https://www.googleapis.com/webfonts/v1/webfonts?key=${apiKey}&sort=popularity`)
+            .then(response => {
+                const fontFamilies = response.data.items.map(font => font.family);
+                setFonts(fontFamilies);
+                setFilteredFonts(fontFamilies);
+                setSelectedFont(fontFamilies[0]);
+            })
+            .catch(error => console.error('Error fetching fonts:', error));
+    }, []);
 
-    const filteredFonts = (fontsList || []).filter((font) => {
-        if (!searchQuery?.trim()) {
-            return true;
-        }
-
-        return (font.family || "")
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase());
-    });
-
-    const filteredFontsWithLimit = filteredFonts.slice(0, limit);
+    useEffect(() => {
+        const filtered = fonts.filter(font =>
+            font.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        setFilteredFonts(filtered);
+    }, [searchQuery, fonts]);
 
     const loadMoreFonts = () => {
-        setLimit((prevLimit) => prevLimit + FONT_LIMIT);
+        setLimit(prevLimit => prevLimit + FONT_LIMIT);
     };
 
-    filteredFontsWithLimit.forEach((font) => {
-        loadFontStyles(font.family);
-    });
-
-    const handleFontSelection = (font: WebfontFamily) => {
-        loadFontStyles(font.family);
+    const getFontLink = (font) => {
+        return `https://fonts.googleapis.com/css2?family=${font.replace(/ /g, '+')}&display=swap`;
     };
 
-    function getFontOption(font: WebfontFamily) {
-        return (
-            <ComboboxOption
-                key={font.family}
-                value={font.family}
-                onClick={() => {
-                    handleFontSelection(font);
-                    combobox.closeDropdown();
-                }}
-                style={{ fontFamily: font.family }}
-            >
-                {font.family}
-            </ComboboxOption>
-        );
-    }
+    const applyFontStyle = (font) => {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = getFontLink(font);
+        document.head.appendChild(link);
+    };
 
-    const fontOptions = filteredFontsWithLimit.map((font) => getFontOption(font));
+    const handleFontSelection = (font) => {
+        setSelectedFont(font);
+        applyFontStyle(font);
+    };
 
-    if (loading) {
-        return <div>Loading fonts...</div>;
-    }
-
-    if (error) {
-        return <div>Error loading fonts: {error}</div>;
-    }
+    const fontOptions = filteredFonts.slice(0, limit).map(font => (
+        <ComboboxOption
+            key={font}
+            value={font}
+            onClick={() => handleFontSelection(font)}
+            style={{ fontFamily: font }}
+        >
+            {font}
+        </ComboboxOption>
+    ));
 
     return (
         <div>
@@ -160,22 +103,22 @@ export const FontPicker = function ({
                     <InputBase
                         component="button"
                         type="button"
-                        label={label}
+                        label="Select a font"
                         pointer
                         rightSection={<ComboboxChevron />}
                         onClick={() => combobox.toggleDropdown()}
                         rightSectionPointerEvents="none"
                         multiline
                     >
-                        {currentFontName ? (
+                        {selectedFont ? (
                             <div
                                 className="text-[1rem]"
-                                style={{ fontFamily: currentFontName }}
+                                style={{ fontFamily: selectedFont }}
                             >
-                                {currentFontName}
+                                {selectedFont}
                             </div>
                         ) : (
-                            <div></div>
+                            <div>Select a font</div>
                         )}
                     </InputBase>
                 </ComboboxTarget>
@@ -217,18 +160,18 @@ export const FontPicker = function ({
                         >
                             <>
                                 {fontOptions}
-                                {filteredFontsWithLimit.length === 0 && (
+                                {filteredFonts.slice(0, limit).length === 0 && (
                                     <div className="p-4 pt-2 text-sm opacity-70">
                                         No fonts found...
                                     </div>
                                 )}
-                                {filteredFonts.length !== filteredFontsWithLimit.length && (
+                                {filteredFonts.length > limit && (
                                     <div
                                         onClick={loadMoreFonts}
                                         className="cursor-pointer p-2 text-[0.85rem] text-primary-400 hover:bg-primary-50"
                                     >
                                         ...and{" "}
-                                        {filteredFonts.length - filteredFontsWithLimit.length} more.
+                                        {filteredFonts.length - limit} more.
                                         <span className="ml-2 font-bold text-blue-500 hover:underline">
                                             Load more
                                         </span>
@@ -238,7 +181,7 @@ export const FontPicker = function ({
                         </ScrollArea.Autosize>
                     </ComboboxOptions>
                     <div className="border-t bg-white p-1">
-                        <a href="https://fonts.google.com/" target="_blank">
+                        <a href="https://fonts.google.com/" target="_blank" rel="noopener noreferrer">
                             <Button
                                 variant="subtle"
                                 color="blue"
@@ -253,8 +196,8 @@ export const FontPicker = function ({
                 </ComboboxDropdown>
             </Combobox>
 
-            <div className="pt-10 flex justify-center" style={{fontFamily: currentFontName || 'inherit'}}>
-                <p style={{fontSize: "18px"}}>This is an example sentence with the selected font!</p>
+            <div className="pt-10 flex justify-center" style={{ fontFamily: selectedFont || 'inherit' }}>
+                <p style={{ fontSize: "18px" }}>This is an example sentence with the selected font!</p>
             </div>
         </div>
     );
